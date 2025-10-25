@@ -1,0 +1,78 @@
+# Python source files
+*.py eol=lf
+*.pyx eol=lf
+*.pxd eol=lf
+*.pyi eol=lf
+
+# Documentation files
+*.rst eol=lf
+*.md eol=lf
+*.mdx eol=lf
+*.txt eol=lf
+
+# Configuration files
+*.yml eol=lf
+*.yaml eol=lf
+*.toml eol=lf
+*.cfg eol=lf
+*.ini eol=lf
+*.conf eol=lf
+*.json eol=lf
+*.json5 eol=lf
+
+# Shell scripts
+*.sh eol=lf
+*.bash eol=lf
+
+# Jupyter Notebooks (treat as text, normalize line endings)
+*.ipynb eol=lf
+
+# Requirements files
+requirements*.txt eol=lf
+*.lock eol=lf
+Pipfile eol=lf
+poetry.lock eol=lf
+
+# Docker files
+Dockerfile eol=lf
+*.dockerfile eol=lf
+docker-compose*.yml eol=lf
+.dockerignore eol=lf
+
+# Git files
+.gitignore eol=lf
+.gitattributes eol=lf
+
+# CI/CD files
+.travis.yml eol=lf
+.gitlab-ci.yml eol=lf
+Jenkinsfile eol=lf
+*.jenkinsfile eol=lf
+
+# CSV files (optional - normalize line endings for version control)
+*.csv eol=lf
+
+# SQL files
+*.sql eol=lf
+
+# HTML/CSS/JS (if you have web components)
+*.html eol=lf
+*.css eol=lf
+*.scss eol=lf
+*.js eol=lf
+*.jsx eol=lf
+*.ts eol=lf
+*.tsx eol=lf
+
+# XML files
+*.xml eol=lf
+
+# Environment files
+.env* eol=lf
+
+# Makefile
+Makefile eol=lf
+*.mk eol=lf
+
+# Jupyter Notebook merge driver
+*.ipynb merge=nbdev-merge
