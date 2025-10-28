@@ -1,23 +1,20 @@
 import logging
 import sys
-from rich.logging import RichHandler
+
 from rich.console import Console
+from rich.logging import RichHandler
 
 
 def init_logger(
-        name: str = __name__,
-        level: int = logging.INFO,
-        preinstalled_lib_logs_override: list[str] = ["BERTopic"],
-        width: int = 300
+    name: str = __name__,
+    level: int = logging.INFO,
+    preinstalled_lib_logs_override: list[str] | None = None,
+    width: int = 300,
 ) -> logging.Logger:
     console = Console(file=sys.stdout, width=width)
 
     rich_handler = RichHandler(
-        console=console,
-        rich_tracebacks=True,
-        markup=True,
-        show_time=True,
-        show_path=True
+        console=console, rich_tracebacks=True, markup=True, show_time=True, show_path=True
     )
 
     formatter = logging.Formatter("%(message)s")
@@ -31,6 +28,10 @@ def init_logger(
         logger.handlers.clear()
 
     logger.addHandler(rich_handler)
+
+    # Set default libraries to override if none provided
+    if preinstalled_lib_logs_override is None:
+        preinstalled_lib_logs_override = ["BERTopic"]
 
     for lib in preinstalled_lib_logs_override:
         lib_logger = logging.getLogger(lib)
