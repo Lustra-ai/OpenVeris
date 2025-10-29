@@ -349,19 +349,20 @@ class PostgreSQLStorage:
         cursor.execute(
             """INSERT INTO declarations (
                 declarant_id, document_id, declaration_type, declaration_year,
-                declaration_year_from, declaration_year_to,
+                reporting_period_from, reporting_period_to, submitted_at,
                 work_place, work_place_edrpou, work_post, post_type, post_category,
                 responsible_position, public_person, corruption_affected,
                 country_id, region, district, community, city, city_type,
                 street, house_num, apartments_num, post_code,
                 same_reg_living_address, raw_data, scraped_at, updated_at
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
             )
             ON CONFLICT (document_id) DO UPDATE SET
                 updated_at = NOW(),
-                raw_data = EXCLUDED.raw_data
+                raw_data = EXCLUDED.raw_data,
+                submitted_at = EXCLUDED.submitted_at
             RETURNING id""",
             (
                 declarant_id,
@@ -370,6 +371,7 @@ class PostgreSQLStorage:
                 self._extract_declaration_year(step_0),
                 self._safe_date(step_0.get("declarationYearFrom")),
                 self._safe_date(step_0.get("declarationYearTo")),
+                self._safe_date(step_0.get("introDate")),
                 self._safe_str(step_1.get("workPlace")),
                 self._safe_str(step_1.get("workPlaceEdrpou")),
                 self._safe_str(step_1.get("workPost")),
@@ -404,29 +406,59 @@ class PostgreSQLStorage:
     def _save_family_members(
         self, declaration_id: str, step_2_data: list[dict], cursor
     ) -> dict[str, str]:
-        """Save family members and return mapping of internal ID to UUID."""
+        """Save family members and return mapping of internal ID to UUID.
+
+        Also links family members to declarants table if they are also public officials
+        to avoid person duplication.
+        """
         family_member_ids = {}
 
         for member in step_2_data:
+            # Check if this family member is also a declarant
+            declarant_id = None
+            tax_number = self._safe_str(member.get("taxNumber"))
+            unzr = self._safe_str(member.get("unzr"))
+
+            # Try to find matching declarant by tax_number
+            if tax_number and tax_number != "[Конфіденційна інформація]":
+                cursor.execute(
+                    "SELECT id FROM declarants WHERE tax_number = %s LIMIT 1",
+                    (tax_number,)
+                )
+                result = cursor.fetchone()
+                if result:
+                    declarant_id = result[0]
+
+            # If not found by tax_number, try by unzr
+            if not declarant_id and unzr and unzr != "[Конфіденційна інформація]":
+                cursor.execute(
+                    "SELECT id FROM declarants WHERE unzr = %s LIMIT 1",
+                    (unzr,)
+                )
+                result = cursor.fetchone()
+                if result:
+                    declarant_id = result[0]
+
             cursor.execute(
                 """INSERT INTO family_members (
-                    declaration_id, lastname, firstname, middlename,
+                    declaration_id, declarant_id, lastname, firstname, middlename,
                     tax_number, unzr, passport,
                     subject_relation, citizenship,
                     country_id, region, district, community, city, city_type,
                     street, house_num, apartments_num, post_code,
                     raw_data, created_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW()
                 ) RETURNING id""",
                 (
                     declaration_id,
+                    declarant_id,  # Link to declarant if they exist
                     self._safe_str(member.get("lastname")),
                     self._safe_str(member.get("firstname")),
                     self._safe_str(member.get("middlename")),
-                    self._safe_str(member.get("taxNumber")),
-                    self._safe_str(member.get("unzr")),
+                    tax_number,
+                    unzr,
                     self._safe_str(member.get("passport")),
                     self._safe_str(member.get("subjectRelation")),
                     self._safe_int(member.get("citizenship")),
@@ -1018,30 +1050,8 @@ class PostgreSQLStorage:
         return None
 
     # ========================================================================
-    # STATISTICS
+    # UTILITIES
     # ========================================================================
-
-    def get_stats(self) -> dict:
-        """Get database statistics."""
-        with self._get_connection() as conn, conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM declarants")
-            declarants_count = cursor.fetchone()[0]
-
-            cursor.execute("SELECT COUNT(*) FROM declarations")
-            declarations_count = cursor.fetchone()[0]
-
-            cursor.execute("SELECT COUNT(*) FROM real_estate")
-            real_estate_count = cursor.fetchone()[0]
-
-            cursor.execute("SELECT COUNT(*) FROM income_sources")
-            income_count = cursor.fetchone()[0]
-
-            return {
-                "declarants": declarants_count,
-                "declarations": declarations_count,
-                "real_estate": real_estate_count,
-                "income_sources": income_count,
-            }
 
     def get_existing_ids(self, declaration_ids: list[str] | None = None) -> set:
         """Check which declaration IDs already exist in database.

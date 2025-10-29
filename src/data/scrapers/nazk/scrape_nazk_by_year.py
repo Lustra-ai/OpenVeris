@@ -9,8 +9,8 @@ from typing import Any
 import redis
 
 from src.data.scrapers.nazk.config import NAZKConfig
-from src.data.scrapers.nazk.models import SearchFilters
 from src.data.scrapers.nazk.postgres_storage import PostgreSQLStorage
+from src.data.scrapers.nazk.schemas import SearchFilters
 from src.data.scrapers.nazk.scraper import NAZKScraper
 from src.utils.logger import init_logger
 
@@ -20,7 +20,7 @@ class YearBasedScraper:
 
     def __init__(self) -> None:
         self.logger = init_logger(__name__)
-        self.config = NAZKConfig()
+        self.config = NAZKConfig.from_yaml()
 
         # Initialize PostgreSQL storage
         self.storage = PostgreSQLStorage(
@@ -41,6 +41,21 @@ class YearBasedScraper:
         # Initialize scraper
         self.scraper = NAZKScraper(config=self.config)
         self.scraper.storage = self.storage
+
+    async def __aenter__(self) -> "YearBasedScraper":
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Async context manager exit - ensures resources are cleaned up."""
+        await self.cleanup()
+
+    async def cleanup(self) -> None:
+        """Clean up resources."""
+        if self.scraper:
+            await self.scraper.close()
+        if self.redis_client:
+            self.redis_client.close()
 
     def _sync_redis_with_db(self) -> None:
         """Load all existing declaration IDs from PostgreSQL into Redis SET."""
@@ -241,10 +256,9 @@ class YearBasedScraper:
 
 async def main() -> None:
     """Main entry point."""
-    scraper = YearBasedScraper()
-
-    # Scrape all years from 2016 to 2025
-    await scraper.scrape_all_years(start_year=2016, end_year=2025)
+    async with YearBasedScraper() as scraper:
+        # Scrape all years from 2016 to 2025
+        await scraper.scrape_all_years(start_year=2016, end_year=2025)
 
 
 if __name__ == "__main__":

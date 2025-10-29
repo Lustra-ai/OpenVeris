@@ -1,0 +1,47 @@
+# NAZK Scraper Configuration
+
+# API endpoints
+base_url: "https://public-api.nazk.gov.ua/v2"
+list_endpoint: "/documents/list"
+document_endpoint: "/documents/{document_id}"
+
+# Rate limiting and anti-blocking
+requests_per_minute: 30
+request_delay_seconds: 0.6
+max_retries: 3  # Maximum: 10 (higher values risk stack overflow)
+retry_delay_seconds: 5.0
+timeout_seconds: 30
+
+# Pagination
+max_pages_per_request: 100
+results_per_page: 100
+
+# Proxy settings (optional)
+proxy_urls: null
+
+# User agents for rotation
+user_agents:
+  - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+  - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15"
+
+# Storage settings
+storage_type: "postgresql"
+db_path: "data/nazk.db"
+use_storage: true
+batch_size: 100
+
+# PostgreSQL settings (credentials loaded from environment variables)
+# Set POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD in .env
+pg_host: null
+pg_port: null
+pg_database: null
+pg_user: null
+pg_password: null
+
+# Worker/distributed scraping settings
+worker_id: null
+page_start: null
+page_end: null

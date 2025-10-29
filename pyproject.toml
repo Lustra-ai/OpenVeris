@@ -6,27 +6,27 @@ requires-python = ">=3.12"
 dependencies = [
     "pandas>=2.3.3",
     "tqdm>=4.67.1",
-    "rich",
-    "crawlee>=0.4.0",
-    "httpx>=0.28.0",
-    "psycopg2-binary>=2.9.9",
-    "redis>=5.0.0"
+    "rich>=14.2.0",
+    "crawlee>=1.0.4",
+    "httpx>=0.28.1",
+    "psycopg2-binary>=2.9.11",
+    "redis>=7.0.1",
+    "pyyaml>=6.0.3",
+    "python-dotenv>=1.2.1"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "jupyter",
-    "nbdev",
-    "ruff",
-    "black",
-    "isort",
-    "mypy",
-    "types-redis",
-    "types-psycopg2",
+    "jupyter>=1.1.1",
+    "nbdev>=2.4.6",
+    "ruff>=0.14.2",
+    "mypy>=1.18.2",
+    "types-redis>=4.6.0.20241004",
+    "types-psycopg2>=2.9.21.20251012",
 ]
 
 [build-system]
-requires = ["uv_build>=0.9.0"]
+requires = ["uv_build>=0.9.6"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -93,25 +93,11 @@ unfixable = []
 known-first-party = ["src"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
-[tool.black]
-line-length = 100
-target-version = ['py312']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | __pycache__
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-line_length = 100
-known_first_party = ["src"]
-skip = [".venv", "__pycache__", "build", "dist"]
+[tool.ruff.format]
+# Use Ruff's formatter (similar to Black)
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.12"

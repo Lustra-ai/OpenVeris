@@ -6,7 +6,7 @@ Each worker handles a subset of years for maximum throughput.
 import argparse
 import asyncio
 
-from scrape_nazk_by_year import YearBasedScraper
+from .scrape_nazk_by_year import YearBasedScraper
 
 
 async def worker(worker_id: int, years: list[int]) -> None:
@@ -16,27 +16,27 @@ async def worker(worker_id: int, years: list[int]) -> None:
         worker_id: Worker identifier
         years: List of years this worker should process
     """
-    scraper = YearBasedScraper()
-    scraper.logger.info(f"Worker {worker_id} starting with years: {years}")
+    async with YearBasedScraper() as scraper:
+        scraper.logger.info(f"Worker {worker_id} starting with years: {years}")
 
-    total_new = 0
-    total_existing = 0
+        total_new = 0
+        total_existing = 0
 
-    for year in years:
-        try:
-            stats = await scraper.scrape_year(year)
-            total_new += stats["new_saved"]
-            total_existing += stats["skipped_existing"]
+        for year in years:
+            try:
+                stats = await scraper.scrape_year(year)
+                total_new += stats["new_saved"]
+                total_existing += stats["skipped_existing"]
 
-            scraper.logger.info(
-                f"Worker {worker_id} - Year {year} complete: "
-                f"{stats['new_saved']} new, {stats['skipped_existing']} existing"
-            )
-        except Exception as e:
-            scraper.logger.error(f"Worker {worker_id} - Error on year {year}: {e}", exc_info=True)
-            continue
+                scraper.logger.info(
+                    f"Worker {worker_id} - Year {year} complete: "
+                    f"{stats['new_saved']} new, {stats['skipped_existing']} existing"
+                )
+            except Exception as e:
+                scraper.logger.error(f"Worker {worker_id} - Error on year {year}: {e}", exc_info=True)
+                continue
 
-    scraper.logger.info(f"Worker {worker_id} finished: {total_new} new, {total_existing} existing")
+        scraper.logger.info(f"Worker {worker_id} finished: {total_new} new, {total_existing} existing")
 
 
 async def main(num_workers: int = 3, start_year: int = 2016, end_year: int = 2025) -> None:

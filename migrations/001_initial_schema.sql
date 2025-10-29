@@ -24,7 +24,7 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 -- CORE TABLES: Declarants and Declarations
 -- =============================================================================
 
--- Declarants: Unique persons who file declarations (normalized by name + IDs)
+-- Declarants: Unique persons who file declarations (normalized by tax_number or unzr)
 CREATE TABLE declarants (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tax_number          VARCHAR(50),

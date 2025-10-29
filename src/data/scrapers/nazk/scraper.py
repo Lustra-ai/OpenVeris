@@ -24,7 +24,6 @@ class NAZKScraper:
         self.logger = init_logger(__name__)
         self._user_agent_index = 0
         self._request_count = 0
-        self._last_request_time = 0.0
 
         # Shared HTTP client for connection pooling
         self._client: httpx.AsyncClient | None = None
@@ -40,14 +39,20 @@ class NAZKScraper:
                     user=self.config.pg_user,
                     password=self.config.pg_password,
                 )
-                self.storage_type: str | None = "postgresql"
             else:
                 raise ValueError(
                     f"Unsupported storage type: {self.config.storage_type}. Only 'postgresql' is supported."
                 )
         else:
             self.storage = None
-            self.storage_type = None
+
+    async def __aenter__(self) -> "NAZKScraper":
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Async context manager exit - ensures client is closed even on exception."""
+        await self.close()
 
     def _get_next_user_agent(self) -> str:
         """Get next user agent for rotation."""
@@ -56,15 +61,14 @@ class NAZKScraper:
         self._user_agent_index = (self._user_agent_index + 1) % len(self.config.user_agents)
         return user_agent
 
-    async def _get_client(self) -> httpx.AsyncClient:
-        """Get or create the shared HTTP client."""
+    def _ensure_client_initialized(self) -> None:
+        """Initialize the HTTP client if not already created."""
         if self._client is None:
             self._client = httpx.AsyncClient(
                 timeout=self.config.timeout_seconds,
                 follow_redirects=True,
                 limits=httpx.Limits(max_keepalive_connections=20, max_connections=30),
             )
-        return self._client
 
     async def close(self) -> None:
         """Close the shared HTTP client."""
@@ -101,13 +105,14 @@ class NAZKScraper:
             }
 
             try:
-                client = await self._get_client()
+                self._ensure_client_initialized()
+                assert self._client is not None, "Client should be initialized"
                 self.logger.debug(f"Requesting (attempt {retry_count + 1}): {url}")
 
                 import time
 
                 start_time = time.time()
-                response = await client.get(url, params=params, headers=headers)
+                response = await self._client.get(url, params=params, headers=headers)
                 elapsed = time.time() - start_time
 
                 response.raise_for_status()
@@ -148,22 +153,3 @@ class NAZKScraper:
                 error_type = type(e).__name__
                 self.logger.error(f"Unexpected {error_type}: {e} | URL: {url}", exc_info=True)
                 return None
-
-    def get_statistics(self) -> dict[str, Any]:
-        """Get scraper statistics.
-
-        Returns:
-            Dictionary with statistics
-        """
-        assert self.config.user_agents is not None, "user_agents must be initialized"
-        stats: dict[str, Any] = {
-            "total_requests": self._request_count,
-            "user_agents_count": len(self.config.user_agents),
-            "current_user_agent_index": self._user_agent_index,
-        }
-
-        # Add storage stats if available
-        if self.storage:
-            stats["storage"] = self.storage.get_stats()
-
-        return stats

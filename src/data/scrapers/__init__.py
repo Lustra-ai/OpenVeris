@@ -13,11 +13,10 @@ Example:
 
 from src.data.scrapers.nazk import NAZKScraper
 from src.data.scrapers.nazk.config import NAZKConfig
-from src.data.scrapers.nazk.models import Declaration, SearchFilters
+from src.data.scrapers.nazk.schemas import SearchFilters
 
 __all__ = [
     "NAZKScraper",
     "NAZKConfig",
-    "Declaration",
     "SearchFilters",
 ]

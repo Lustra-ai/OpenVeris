@@ -7,22 +7,23 @@ Scraper for Ukrainian NAZK (National Agency on Corruption Prevention) public dec
 ```python
 import asyncio
 from src.scrapers.nazk import NAZKScraper
-from src.scrapers.nazk.models import SearchFilters
+from src.scrapers.nazk.schemas import SearchFilters
 from src.scrapers.nazk.postgres_storage import PostgreSQLStorage
 
 async def main():
-    scraper = NAZKScraper()
-    storage = PostgreSQLStorage()
+    # Use async context manager to ensure proper cleanup
+    async with NAZKScraper() as scraper:
+        storage = PostgreSQLStorage()
 
-    # Search declarations from 2024
-    filters = SearchFilters(declaration_year=2024)
+        # Search declarations from 2024
+        filters = SearchFilters(declaration_year=2024)
 
-    async for declaration in scraper.search_declarations(filters=filters, max_pages=5):
-        # Fetch full declaration details
-        full_data = await scraper.get_declaration(declaration.document_id)
-        if full_data:
-            storage.save_declaration(declaration.document_id, full_data.data)
-            print(f"Saved: {declaration.declarant_name}")
+        async for declaration in scraper.search_declarations(filters=filters, max_pages=5):
+            # Fetch full declaration details
+            full_data = await scraper.get_declaration(declaration.document_id)
+            if full_data:
+                storage.save_declaration(declaration.document_id, full_data.data)
+                print(f"Saved: {declaration.declarant_name}")
 
 asyncio.run(main())
 ```
@@ -34,6 +35,7 @@ asyncio.run(main())
 - **Anti-Blocking**: User agent rotation, configurable delays, exponential backoff
 - **Flexible Search**: Filter by year, type, declarant name, or date range
 - **Async/Await**: Efficient concurrent requests with httpx
+- **Resource Management**: Async context manager ensures HTTP connections are properly closed
 
 ## Configuration
 
@@ -62,6 +64,7 @@ The scraper stores declarations in a fully normalized PostgreSQL database:
 ```mermaid
 erDiagram
     declarants ||--o{ declarations : "files"
+    declarants ||--o{ family_members : "also_appears_as"
     declarations ||--o{ family_members : "includes"
     declarations ||--o{ real_estate : "owns"
     declarations ||--o{ vehicles : "owns"
@@ -100,8 +103,9 @@ erDiagram
         varchar document_id UK
         int declaration_type
         int declaration_year
-        date declaration_year_from
-        date declaration_year_to
+        date reporting_period_from
+        date reporting_period_to
+        timestamp submitted_at
         text work_place
         varchar work_post
         boolean responsible_position
@@ -112,6 +116,7 @@ erDiagram
     family_members {
         uuid id PK
         uuid declaration_id FK
+        uuid declarant_id FK
         varchar lastname
         varchar firstname
         varchar tax_number
@@ -173,23 +178,31 @@ erDiagram
 
 ### Key Tables
 
-- **declarants**: Unique persons (normalized by name + tax ID)
+- **declarants**: Unique persons (normalized by tax ID)
 - **declarations**: Annual/termination declarations filed by declarants
+  - `reporting_period_from/to`: Date range covered by this declaration
+  - `submitted_at`: When the declaration was actually submitted (can have multiple per year)
+  - `declaration_year`: Year for filtering/grouping
 - **family_members**: Spouse, children listed in declarations
+  - `declarant_id`: Optional link to declarants table to prevent person duplication
+  - If a family member is also a public official (declarant), they are linked instead of duplicated
+  - Example: Both spouses are public officials → each appears in declarants, linked via family_members
 - **Assets**: real_estate, vehicles, bank_accounts, corporate_rights, securities, valuables, intangible_assets
 - **Financial**: income_sources, expenses, liabilities
 - **Work**: part_time_work, memberships
+
+### Person Deduplication
+
+The system prevents duplicate persons when family members are also declarants:
+- When saving a family member, checks if their tax_number/unzr exists in declarants table
+- If found, sets `family_members.declarant_id` to link to the existing declarant
+- Allows querying all declarations for a person (both as declarant and family member)
+- Maintains referential integrity without data duplication
 
 ## API Endpoints
 
 - `GET /v2/documents/list` - Search declarations (paginated)
 - `GET /v2/documents/{id}` - Fetch single declaration with full details
-
-## Testing
-
-```bash
-.venv/bin/python test_nazk_scraper.py
-```
 
 ## License
 
