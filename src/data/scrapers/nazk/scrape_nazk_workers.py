@@ -33,10 +33,14 @@ async def worker(worker_id: int, years: list[int]) -> None:
                     f"{stats['new_saved']} new, {stats['skipped_existing']} existing"
                 )
             except Exception as e:
-                scraper.logger.error(f"Worker {worker_id} - Error on year {year}: {e}", exc_info=True)
+                scraper.logger.error(
+                    f"Worker {worker_id} - Error on year {year}: {e}", exc_info=True
+                )
                 continue
 
-        scraper.logger.info(f"Worker {worker_id} finished: {total_new} new, {total_existing} existing")
+        scraper.logger.info(
+            f"Worker {worker_id} finished: {total_new} new, {total_existing} existing"
+        )
 
 
 async def main(num_workers: int = 3, start_year: int = 2016, end_year: int = 2025) -> None:

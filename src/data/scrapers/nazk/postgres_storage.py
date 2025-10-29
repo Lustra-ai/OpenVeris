@@ -422,8 +422,7 @@ class PostgreSQLStorage:
             # Try to find matching declarant by tax_number
             if tax_number and tax_number != "[Конфіденційна інформація]":
                 cursor.execute(
-                    "SELECT id FROM declarants WHERE tax_number = %s LIMIT 1",
-                    (tax_number,)
+                    "SELECT id FROM declarants WHERE tax_number = %s LIMIT 1", (tax_number,)
                 )
                 result = cursor.fetchone()
                 if result:
@@ -431,10 +430,7 @@ class PostgreSQLStorage:
 
             # If not found by tax_number, try by unzr
             if not declarant_id and unzr and unzr != "[Конфіденційна інформація]":
-                cursor.execute(
-                    "SELECT id FROM declarants WHERE unzr = %s LIMIT 1",
-                    (unzr,)
-                )
+                cursor.execute("SELECT id FROM declarants WHERE unzr = %s LIMIT 1", (unzr,))
                 result = cursor.fetchone()
                 if result:
                     declarant_id = result[0]
