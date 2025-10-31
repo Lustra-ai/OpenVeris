@@ -8,8 +8,8 @@ from rich.logging import RichHandler
 def init_logger(
     name: str = __name__,
     level: int = logging.INFO,
-    preinstalled_lib_logs_override: list[str] | None = None,
-    width: int = 300,
+    preinstalled_lib_logs_override: tuple[str] | None = ("BERTopic",),
+    width: int = 200,
 ) -> logging.Logger:
     console = Console(file=sys.stdout, width=width)
 
@@ -28,10 +28,6 @@ def init_logger(
         logger.handlers.clear()
 
     logger.addHandler(rich_handler)
-
-    # Set default libraries to override if none provided
-    if preinstalled_lib_logs_override is None:
-        preinstalled_lib_logs_override = ["BERTopic"]
 
     for lib in preinstalled_lib_logs_override:
         lib_logger = logging.getLogger(lib)

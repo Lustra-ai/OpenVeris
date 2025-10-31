@@ -96,7 +96,8 @@ class NAZKConfig:
 
         if config_path is None:
             # Default to config/nazk.yaml in project root
-            config_path = Path(__file__).parent.parent.parent.parent.parent / "config" / "nazk.yaml"
+            config_path = (Path(__file__).parent.parent.parent.parent.parent /
+                           "config" / "data" / "scrapers" / "nazk.yaml")
         else:
             config_path = Path(config_path)
 
@@ -108,7 +109,7 @@ class NAZKConfig:
 
         # Override with environment variables for sensitive data
         config_data["pg_host"] = os.getenv("POSTGRES_HOST", config_data.get("pg_host"))
-        config_data["pg_port"] = int(os.getenv("POSTGRES_PORT", config_data.get("pg_port") or 5432))
+        config_data["pg_port"] = int(os.getenv("POSTGRES_PORT", config_data.get("pg_port", 5432)))
         config_data["pg_database"] = os.getenv("POSTGRES_DB", config_data.get("pg_database"))
         config_data["pg_user"] = os.getenv("POSTGRES_USER", config_data.get("pg_user"))
         config_data["pg_password"] = os.getenv("POSTGRES_PASSWORD", config_data.get("pg_password"))

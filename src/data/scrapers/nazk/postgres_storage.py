@@ -15,11 +15,11 @@ class PostgreSQLStorage:
 
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 5432,
-        database: str = "openveris",
-        user: str = "openveris",
-        password: str = "openveris_dev_password",
+            password: str,
+            host: str = "localhost",
+            port: int = 5432,
+            database: str = "openveris",
+            user: str = "openveris",
     ):
         """Initialize PostgreSQL storage.
 

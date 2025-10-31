@@ -24,18 +24,18 @@ class YearBasedScraper:
 
         # Initialize PostgreSQL storage
         self.storage = PostgreSQLStorage(
+            password=self.config.pg_password,
             host=self.config.pg_host,
             port=self.config.pg_port,
             database=self.config.pg_database,
             user=self.config.pg_user,
-            password=self.config.pg_password,
         )
 
         # Initialize Redis for fast existence checks
         self.redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
         self.redis_key = "nazk:existing_declaration_ids"
 
-        # Load existing IDs from PostgreSQL into Redis on startup
+        # Load existing IDs from PostgresSQL into Redis on startup
         self._sync_redis_with_db()
 
         # Initialize scraper
