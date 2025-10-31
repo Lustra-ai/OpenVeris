@@ -47,6 +47,9 @@ class NAZKConfig:
     pg_user: str | None = None
     pg_password: str | None = None
 
+    redis_host: str | None = None
+    redis_port: int | None = None
+
     # Worker/distributed scraping settings
     worker_id: str | None = None  # Unique identifier for this worker
     page_start: int | None = None  # Starting page for this worker
@@ -114,6 +117,9 @@ class NAZKConfig:
         config_data["pg_database"] = os.getenv("POSTGRES_DB", config_data.get("pg_database"))
         config_data["pg_user"] = os.getenv("POSTGRES_USER", config_data.get("pg_user"))
         config_data["pg_password"] = os.getenv("POSTGRES_PASSWORD", config_data.get("pg_password"))
+
+        config_data["redis_host"] = os.getenv("REDIS_HOST", config_data.get("redis_host"))
+        config_data["redis_port"] = int(os.getenv("REDIS_PORT", config_data.get("redis_port", 6379)))
 
         # Validate that required credentials are present
         required_fields = ["pg_host", "pg_database", "pg_user", "pg_password"]

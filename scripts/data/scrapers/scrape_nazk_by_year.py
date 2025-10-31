@@ -32,7 +32,7 @@ class YearBasedScraper:
         )
 
         # Initialize Redis for fast existence checks
-        self.redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
+        self.redis_client = redis.Redis(host=self.config.redis_host, port=self.config.redis_port, decode_responses=True)
         self.redis_key = "nazk:existing_declaration_ids"
 
         # Load existing IDs from PostgresSQL into Redis on startup
