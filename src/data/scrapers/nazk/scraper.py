@@ -144,9 +144,7 @@ class NAZKScraper:
                     self.logger.info(f"Retrying in {retry_delay}s...")
                     await asyncio.sleep(retry_delay)
                     return await self._make_request(url, params, retry_count + 1)
-                self.logger.error(
-                    f"Failed after {self.config.max_retries + 1} attempts ({error_type}): {url}"
-                )
+                self.logger.error(f"Failed after {self.config.max_retries + 1} attempts ({error_type}): {url}")
                 return None
 
             except Exception as e:

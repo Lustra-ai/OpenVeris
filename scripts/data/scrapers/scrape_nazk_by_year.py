@@ -117,11 +117,7 @@ class YearBasedScraper:
                 break
 
             # Get IDs from this page
-            page_ids = [
-                item.get("id")
-                for item in declarations_data
-                if isinstance(item, dict) and item.get("id")
-            ]
+            page_ids = [item.get("id") for item in declarations_data if isinstance(item, dict) and item.get("id")]
 
             # Check which ones already exist in Redis (FAST O(1) lookup)
             existing_ids = set()
@@ -132,8 +128,7 @@ class YearBasedScraper:
             new_ids = set(page_ids) - existing_ids
 
             self.logger.info(
-                f"Year {year}, Page {page}: {len(page_ids)} total, "
-                f"{len(existing_ids)} existing, {len(new_ids)} new"
+                f"Year {year}, Page {page}: {len(page_ids)} total, {len(existing_ids)} existing, {len(new_ids)} new"
             )
 
             total_declarations += len(page_ids)
@@ -143,9 +138,7 @@ class YearBasedScraper:
             async def fetch_and_save_declaration(document_id: str) -> bool:
                 """Fetch and save a single declaration."""
                 try:
-                    full_data = await self.scraper._make_request(
-                        f"{self.config.base_url}/documents/{document_id}"
-                    )
+                    full_data = await self.scraper._make_request(f"{self.config.base_url}/documents/{document_id}")
                     if full_data:
                         success = self.storage.save_declaration(document_id, full_data)
                         if success:
@@ -155,13 +148,9 @@ class YearBasedScraper:
                         else:
                             self.logger.warning(f"Failed to save declaration {document_id}")
                     else:
-                        self.logger.warning(
-                            f"Failed to fetch declaration {document_id} (API returned None)"
-                        )
+                        self.logger.warning(f"Failed to fetch declaration {document_id} (API returned None)")
                 except Exception as e:
-                    self.logger.error(
-                        f"Exception processing {document_id}: {type(e).__name__}: {e}"
-                    )
+                    self.logger.error(f"Exception processing {document_id}: {type(e).__name__}: {e}")
                 return False
 
             # Fetch all new declarations in parallel
@@ -178,9 +167,7 @@ class YearBasedScraper:
                     timeout=300.0,  # 5 minutes max for entire page
                 )
             except TimeoutError:
-                self.logger.error(
-                    f"Year {year}, Page {page}: Timeout after 300s, marking all as failed"
-                )
+                self.logger.error(f"Year {year}, Page {page}: Timeout after 300s, marking all as failed")
                 results = [False] * len(tasks)
 
             saved_count = sum(1 for r in results if r is True)
@@ -196,9 +183,7 @@ class YearBasedScraper:
                 )
 
             if new_declarations % 100 == 0:
-                self.logger.info(
-                    f"Year {year}: Progress - {new_declarations} new declarations saved"
-                )
+                self.logger.info(f"Year {year}: Progress - {new_declarations} new declarations saved")
 
             page += 1
 

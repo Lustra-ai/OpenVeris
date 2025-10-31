@@ -96,8 +96,9 @@ class NAZKConfig:
 
         if config_path is None:
             # Default to config/nazk.yaml in project root
-            config_path = (Path(__file__).parent.parent.parent.parent.parent /
-                           "config" / "data" / "scrapers" / "nazk.yaml")
+            config_path = (
+                Path(__file__).parent.parent.parent.parent.parent / "config" / "data" / "scrapers" / "nazk.yaml"
+            )
         else:
             config_path = Path(config_path)
 

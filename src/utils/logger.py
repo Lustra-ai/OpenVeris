@@ -13,9 +13,7 @@ def init_logger(
 ) -> logging.Logger:
     console = Console(file=sys.stdout, width=width)
 
-    rich_handler = RichHandler(
-        console=console, rich_tracebacks=True, markup=True, show_time=True, show_path=True
-    )
+    rich_handler = RichHandler(console=console, rich_tracebacks=True, markup=True, show_time=True, show_path=True)
 
     formatter = logging.Formatter("%(message)s")
     rich_handler.setFormatter(formatter)

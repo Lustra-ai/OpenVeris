@@ -15,11 +15,11 @@ class PostgreSQLStorage:
 
     def __init__(
         self,
-            password: str,
-            host: str = "localhost",
-            port: int = 5432,
-            database: str = "openveris",
-            user: str = "openveris",
+        password: str,
+        host: str = "localhost",
+        port: int = 5432,
+        database: str = "openveris",
+        user: str = "openveris",
     ):
         """Initialize PostgreSQL storage.
 
@@ -403,9 +403,7 @@ class PostgreSQLStorage:
     # FAMILY MEMBERS
     # ========================================================================
 
-    def _save_family_members(
-        self, declaration_id: str, step_2_data: list[dict], cursor
-    ) -> dict[str, str]:
+    def _save_family_members(self, declaration_id: str, step_2_data: list[dict], cursor) -> dict[str, str]:
         """Save family members and return mapping of internal ID to UUID.
 
         Also links family members to declarants table if they are also public officials
@@ -421,9 +419,7 @@ class PostgreSQLStorage:
 
             # Try to find matching declarant by tax_number
             if tax_number and tax_number != "[Конфіденційна інформація]":
-                cursor.execute(
-                    "SELECT id FROM declarants WHERE tax_number = %s LIMIT 1", (tax_number,)
-                )
+                cursor.execute("SELECT id FROM declarants WHERE tax_number = %s LIMIT 1", (tax_number,))
                 result = cursor.fetchone()
                 if result:
                     declarant_id = result[0]
@@ -493,9 +489,7 @@ class PostgreSQLStorage:
         """Save real estate properties."""
         for prop in step_3_data:
             # Determine owner
-            owner_type, family_member_id = self._determine_owner(
-                prop.get("rights", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(prop.get("rights", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO real_estate (
@@ -550,9 +544,7 @@ class PostgreSQLStorage:
     ):
         """Save income sources."""
         for income in step_11_data:
-            owner_type, family_member_id = self._determine_owner(
-                income.get("person", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(income.get("person", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO income_sources (
@@ -595,9 +587,7 @@ class PostgreSQLStorage:
                 self.logger.warning(f"Skipping vehicle without objectType: {vehicle.keys()}")
                 continue
 
-            owner_type, family_member_id = self._determine_owner(
-                vehicle.get("rights", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(vehicle.get("rights", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO vehicles (
@@ -643,9 +633,7 @@ class PostgreSQLStorage:
                 self.logger.warning(f"Skipping valuable without objectType: {valuable.keys()}")
                 continue
 
-            owner_type, family_member_id = self._determine_owner(
-                valuable.get("rights", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(valuable.get("rights", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO valuables (
@@ -684,9 +672,7 @@ class PostgreSQLStorage:
     ):
         """Save bank accounts."""
         for account in step_17_data:
-            owner_type, family_member_id = self._determine_owner(
-                account.get("person_who_care", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(account.get("person_who_care", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO bank_accounts (
@@ -769,13 +755,9 @@ class PostgreSQLStorage:
         """Save securities."""
         for security in step_7_data:
             # Try both 'objectType' and 'typeProperty' fields
-            security_type = self._safe_str(
-                security.get("objectType") or security.get("typeProperty")
-            )
+            security_type = self._safe_str(security.get("objectType") or security.get("typeProperty"))
             if not security_type:
-                self.logger.warning(
-                    f"Skipping security without objectType/typeProperty: {security.keys()}"
-                )
+                self.logger.warning(f"Skipping security without objectType/typeProperty: {security.keys()}")
                 continue
 
             owner_type, family_member_id = self._determine_owner(
@@ -783,12 +765,8 @@ class PostgreSQLStorage:
             )
 
             # Try multiple field names for issuer
-            issuer_name = self._safe_str(
-                security.get("emitent") or security.get("emitent_ua_company_name")
-            )
-            issuer_edrpou = self._safe_str(
-                security.get("emitent_edrpou") or security.get("emitent_ua_company_code")
-            )
+            issuer_name = self._safe_str(security.get("emitent") or security.get("emitent_ua_company_name"))
+            issuer_edrpou = self._safe_str(security.get("emitent_edrpou") or security.get("emitent_ua_company_code"))
 
             cursor.execute(
                 """INSERT INTO securities (
@@ -810,9 +788,7 @@ class PostgreSQLStorage:
                     self._safe_decimal(security.get("units") or security.get("amount")),
                     self._safe_decimal(security.get("cost")),
                     self._safe_str(security.get("currency", "UAH")),
-                    self._get_first_ownership_type(
-                        security.get("rights", []) or security.get("persons", [])
-                    ),
+                    self._get_first_ownership_type(security.get("rights", []) or security.get("persons", [])),
                     self._safe_date(security.get("owningDate")),
                     json.dumps(
                         security.get("rights", []) or security.get("persons", []),
@@ -838,14 +814,10 @@ class PostgreSQLStorage:
             # Try both 'company_name' and 'name' fields
             company_name = self._safe_str(corp_right.get("company_name") or corp_right.get("name"))
             if not company_name:
-                self.logger.warning(
-                    f"Skipping corporate right without company_name/name: {corp_right.keys()}"
-                )
+                self.logger.warning(f"Skipping corporate right without company_name/name: {corp_right.keys()}")
                 continue
 
-            owner_type, family_member_id = self._determine_owner(
-                corp_right.get("rights", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(corp_right.get("rights", []), family_member_ids)
 
             # Try multiple field names for company code
             company_code = self._safe_str(
@@ -867,9 +839,7 @@ class PostgreSQLStorage:
                     family_member_id,
                     company_name,
                     company_code,
-                    self._safe_decimal(
-                        corp_right.get("share_percent") or corp_right.get("cost_percent")
-                    ),
+                    self._safe_decimal(corp_right.get("share_percent") or corp_right.get("cost_percent")),
                     self._get_first_ownership_type(corp_right.get("rights", [])),
                     self._safe_date(corp_right.get("owningDate")),
                     json.dumps(corp_right.get("rights", []), ensure_ascii=False),
@@ -904,9 +874,7 @@ class PostgreSQLStorage:
                 self.logger.debug(f"Skipping intangible asset without objectType: {asset.keys()}")
                 continue
 
-            owner_type, family_member_id = self._determine_owner(
-                asset.get("rights", []), family_member_ids
-            )
+            owner_type, family_member_id = self._determine_owner(asset.get("rights", []), family_member_ids)
 
             cursor.execute(
                 """INSERT INTO intangible_assets (
